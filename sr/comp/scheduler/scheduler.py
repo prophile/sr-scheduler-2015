@@ -95,11 +95,12 @@ class Scheduler(object):
             previous_matches = schedule[match_id-self.separation:match_id]
             entrants = set(entrant for entrant in match
                             if not is_pseudo(entrant))
-            previous_entrants = set(entrant for previous_match in previous_matches
-                                            for entrant in previous_match
-                                            if not is_pseudo(entrant))
-            if not entrants.isdisjoint(previous_entrants):
-                return False
+            for previous_match in previous_matches:
+                for previous_entrant in previous_match:
+                    if is_pseudo(previous_entrant):
+                        continue
+                    if previous_entrant in entrants:
+                        return False
             # Update constraint (2)
             for arena_id in range(len(self.arenas)):
                 game = match[arena_id*self.num_corners:(arena_id+1)*self.num_corners]
