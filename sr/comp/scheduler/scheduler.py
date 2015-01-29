@@ -35,12 +35,14 @@ class Scheduler(object):
                  arenas=('main',),
                  num_corners=4,
                  random=random,
+                 appearances_per_round=1,
                  separation=2,
                  max_matchups=2):
         self.num_corners = num_corners
         self.random = random
         self.arenas = tuple(arenas)
         self.max_match_periods = max_match_periods
+        self.appearances_per_round = appearances_per_round
         self._calculate_teams(teams)
         self._calculate_rounds()
         self.separation = separation
@@ -60,7 +62,7 @@ class Scheduler(object):
         return team[0] == '~'
 
     def _calculate_teams(self, base_teams):
-        teams = list(base_teams)
+        teams = list(base_teams) * self.appearances_per_round
         # account for overflow
         overflow = (self.entrants_per_match_period -
                      (len(teams) % self.entrants_per_match_period))
@@ -184,6 +186,10 @@ def main(*args):
                         type=int,
                         default=2,
                         help='maximum times any team can face any given other team')
+    parser.add_argument('-a', '--appearances-per-round',
+                        type=int,
+                        default=1,
+                        help='number of times each team appears in each round')
     parser.add_argument('--parallel',
                         type=int,
                         default=1,
@@ -211,7 +217,8 @@ def main(*args):
                           arenas=arenas,
                           num_corners=num_corners,
                           separation=args.spacing,
-                          max_matchups=args.max_repeated_matchups)
+                          max_matchups=args.max_repeated_matchups,
+                          appearances_per_round=args.appearances_per_round)
     if args.parallel > 1:
         scheduler.lprint('Using {} threads'.format(args.parallel))
         pool = Pool(args.parallel)
