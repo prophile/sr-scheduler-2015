@@ -10,6 +10,7 @@ setup(name='sr.comp.scheduler',
       namespace_packages=['sr', 'sr.comp'],
       description=DESCRIPTION,
       long_description=long_description,
+      license='MIT',
       author='Student Robotics Competition Software SIG',
       author_email='srobo-devel@googlegroups.com',
       install_requires=['PyYAML >=3.11, <4'])
