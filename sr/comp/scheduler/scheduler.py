@@ -229,3 +229,6 @@ def main(*args):
         output_data = scheduler.run()
         yaml.dump({'matches': output_data}, sys.stdout)
 
+def cli_main():
+    main(*sys.argv[1:])
+

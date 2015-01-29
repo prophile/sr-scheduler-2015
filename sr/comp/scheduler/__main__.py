@@ -1,5 +1,4 @@
-from .scheduler import main
-import sys
+from .scheduler import cli_main
 
-main(*sys.argv[1:])
+cli_main()
 
