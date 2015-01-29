@@ -8,10 +8,10 @@ Run with ``sr-comp-schedule``.
 
 The general strategy for planning matches is:
 
-1. schedule a round at a time
-1. randomly permute the list of teams then partition it into matches each pass through
-1. if it fits the criteria, add it then move on to the next round
-1. if 1000 permutations pass without a hit, backtrack one round
+#. schedule a round at a time
+#. randomly permute the list of teams then partition it into matches each pass through
+#. if it fits the criteria, add it then move on to the next round
+#. if 1000 permutations pass without a hit, backtrack one round
 
 The criteria are:
 
