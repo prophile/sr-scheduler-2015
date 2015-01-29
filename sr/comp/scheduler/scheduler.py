@@ -80,7 +80,9 @@ class Scheduler(object):
                                 // len(self._teams))
         self.round_length = len(self._teams) // self.entrants_per_match_period
 
-    def _validate(self, schedule, matchup_max=None, matchup_impatience_bump=lambda: None):
+    def _validate(self, schedule,
+                  matchup_max=None, matchup_impatience_bump=lambda: None):
+        is_pseudo = self._is_pseudo
         if matchup_max is None:
             matchup_max = self.max_matchups
         # 3 tests in this function:
@@ -92,22 +94,22 @@ class Scheduler(object):
             # Test constraint (1)
             previous_matches = schedule[match_id-self.separation:match_id]
             entrants = set(entrant for entrant in match
-                            if not self._is_pseudo(entrant))
-            for previous_match in previous_matches:
-                previous_entrants = set(entrant for entrant in previous_match
-                                         if not self._is_pseudo(entrant))
-                if entrants & previous_entrants:
-                    return False
+                            if not is_pseudo(entrant))
+            previous_entrants = set(entrant for previous_match in previous_matches
+                                            for entrant in previous_match
+                                            if not is_pseudo(entrant))
+            if not entrants.isdisjoint(previous_entrants):
+                return False
             # Update constraint (2)
             for arena_id in range(len(self.arenas)):
                 game = match[arena_id*self.num_corners:(arena_id+1)*self.num_corners]
                 for a, b in product(game, repeat=2):
                     if a >= b:
                         continue
-                    a_pseudo, b_pseudo = self._is_pseudo(a), self._is_pseudo(b)
+                    a_pseudo, b_pseudo = is_pseudo(a), is_pseudo(b)
                     # Check constraint (3) while we're here
                     if (a_pseudo and b_pseudo and
-                            not all(self._is_pseudo(x) for x in game)):
+                            not all(is_pseudo(x) for x in game)):
                         return False
                     elif not a_pseudo and not b_pseudo:
                         matchups.update([(a, b)])
