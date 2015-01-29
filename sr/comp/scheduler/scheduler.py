@@ -12,6 +12,7 @@ import yaml
 from datetime import timedelta
 
 from multiprocessing import Pool
+from .metadata import DESCRIPTION, VERSION
 
 class PatienceCounter(object):
     def __init__(self, threshold):
@@ -171,7 +172,7 @@ def max_possible_match_periods(sched_db):
     return int(total_league_time.total_seconds() // match_period_length)
 
 def main(*args):
-    parser = argparse.ArgumentParser(description='Generate a match schedule')
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument('compstate',
                         type=str,
                         help='competition state git repository')
@@ -187,6 +188,10 @@ def main(*args):
                         type=int,
                         default=1,
                         help='number of parallel threads')
+    parser.add_argument('-v', '--version',
+                        action='version',
+                        version=VERSION,
+                        help='display version and exit')
     args = parser.parse_args(args)
 
     with open(os.path.join(args.compstate, 'arenas.yaml')) as f:
@@ -223,7 +228,4 @@ def main(*args):
     else:
         output_data = scheduler.run()
         yaml.dump({'matches': output_data}, sys.stdout)
-
-if __name__ == '__main__':
-    main(*sys.argv[1:])
 
