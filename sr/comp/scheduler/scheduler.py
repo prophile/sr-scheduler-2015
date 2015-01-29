@@ -85,16 +85,23 @@ class Scheduler(object):
         is_pseudo = self._is_pseudo
         if matchup_max is None:
             matchup_max = self.max_matchups
-        # 3 tests in this function:
+        multi_per_match_mode = self.appearances_per_round > 1
+        # 4 tests in this function:
         #  (1) validate that teams aren't scheduled too tightly
         #  (2) validate that matchups aren't too frequent
         #  (3) validate that no match has two teams sitting out (or if it is, that it's blank)
+        # if operating multiple appearances per match, also:
+        #  (4) make sure that a team doesn't appear in a match twice
         matchups = Counter()
         for match_id, match in enumerate(schedule):
-            # Test constraint (1)
-            previous_matches = schedule[match_id-self.separation:match_id]
             entrants = set(entrant for entrant in match
                             if not is_pseudo(entrant))
+            if multi_per_match_mode:
+                # Test constraint (4)
+                if len(entrants) != len([entrant for entrant in match if not is_pseudo(entrant)]):
+                    return False
+            # Test constraint (1)
+            previous_matches = schedule[match_id-self.separation:match_id]
             for previous_match in previous_matches:
                 for previous_entrant in previous_match:
                     if is_pseudo(previous_entrant):
