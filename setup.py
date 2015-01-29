@@ -13,5 +13,15 @@ setup(name='sr.comp.scheduler',
       license='MIT',
       author='Student Robotics Competition Software SIG',
       author_email='srobo-devel@googlegroups.com',
-      install_requires=['PyYAML >=3.11, <4'])
+      install_requires=['PyYAML >=3.11, <4'],
+      classifiers=[
+          'Development Status :: 3 - Alpha',
+          'Environment :: Console',
+          'License :: OSI Approved :: MIT License',
+          'Operating System :: POSIX',
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.4',
+          'Programming Language :: Python :: Implementation :: CPython',
+          'Programming Language :: Python :: Implementation :: PyPy'
+      ])
 
