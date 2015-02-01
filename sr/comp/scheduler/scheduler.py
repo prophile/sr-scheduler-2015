@@ -5,6 +5,7 @@ import sys
 from collections import Counter
 from itertools import product
 from math import ceil
+from fractions import gcd
 import os.path
 
 import argparse
@@ -28,6 +29,16 @@ class PatienceCounter(object):
     def reached(self):
         return self.level >= self.threshold
 
+def prime_factors(n):
+    d = 2
+    while d*d <= n:
+        while n%d == 0:
+            yield d
+            n //= d
+        d += 1
+    if n > 1:
+        yield n
+
 class Scheduler(object):
     def __init__(self,
                  teams,
@@ -37,7 +48,9 @@ class Scheduler(object):
                  random=random,
                  appearances_per_round=1,
                  separation=2,
-                 max_matchups=2):
+                 max_matchups=2,
+                 enable_lcg=True):
+        self.tag = ''
         self.num_corners = num_corners
         self.random = random
         self.arenas = tuple(arenas)
@@ -47,7 +60,10 @@ class Scheduler(object):
         self._calculate_rounds()
         self.separation = separation
         self.max_matchups = max_matchups
-        self.tag = ''
+        if enable_lcg:
+            self._compute_lcg_params()
+        else:
+            self._lcg_params = None
 
     def lprint(self, *args, **kwargs):
         if self.tag:
@@ -130,17 +146,69 @@ class Scheduler(object):
         # No objections, your honour!
         return True
 
+    def _compute_lcg_params(self):
+        m = len(self._teams)
+        for a in range(m - 1, 0, -1):
+            am1 = a - 1
+            if am1 % 4 != 0:
+                continue
+            if any(am1 % factor != 0 for factor in prime_factors(m)):
+                continue
+            for c in range(m - 1, 0, -1):
+                if gcd(c, m) != 1:
+                    continue
+                epm = self.entrants_per_match_period
+                acceptable = True
+                for sm in range(1, self.separation+1):
+                    overlap = 1 + self.separation - sm
+                    dst_a = 0
+                    dst_b = epm * overlap
+                    src_a = (self.round_length-sm)*epm
+                    src_b = (1+self.round_length-sm)*epm
+                    src = set((a*x + c) % m for x in range(src_a, src_b))
+                    dst = set(range(dst_a, dst_b))
+                    if not src.isdisjoint(dst):
+                        acceptable = False
+                if not acceptable:
+                    continue
+                self._lcg_params = (a, c)
+                self.lprint('Found LCG settings: ({}, {})'.format(a, c))
+                return
+        self.lprint('No valid LCG parameters')
+        self._lcg_params = None
+
+    def _lcg_permute(self, teams):
+        if self._lcg_params is None:
+            return None
+        a, c = self._lcg_params
+        m = len(teams)
+        if m != len(self._teams):
+            return None
+        permutation = [teams[(a*n + c) % m] for n in range(len(teams))]
+        if set(permutation) != set(teams):
+            raise ValueError('permutation fault')
+        return permutation
+
     def run(self):
         matchup_impatience = PatienceCounter(200000)
         max_matchups = self.max_matchups
         matches = []
         teams = list(self._teams)
+        self.random.shuffle(teams)
         while len(matches) < self.total_matches:
             this_round = len(matches) // self.round_length
             self.lprint('Scheduling round {round} ({prev}/{tot} complete)'.format(
                             round=this_round,
                             prev=len(matches),
                             tot=self.total_matches))
+            # Attempt the LCG
+            lcg_round = self._lcg_permute(teams)
+            if lcg_round is not None:
+                matches_prime = matches + self._match_partition(lcg_round)
+                if self._validate(matches_prime, max_matchups, matchup_impatience.bump):
+                    matches = matches_prime
+                    self.lprint('  completed via LCG permutation')
+                    continue
             for tick in range(10000):
                 if matchup_impatience.reached():
                     matchup_impatience.reset()
@@ -200,6 +268,10 @@ def main(*args):
                         type=int,
                         default=1,
                         help='number of times each team appears in each round')
+    parser.add_argument('--lcg',
+                        action='store_true',
+                        dest='lcg',
+                        help='enable LCG permutation')
     parser.add_argument('--parallel',
                         type=int,
                         default=1,
@@ -228,7 +300,8 @@ def main(*args):
                           num_corners=num_corners,
                           separation=args.spacing,
                           max_matchups=args.max_repeated_matchups,
-                          appearances_per_round=args.appearances_per_round)
+                          appearances_per_round=args.appearances_per_round,
+                          enable_lcg=args.lcg)
     if args.parallel > 1:
         scheduler.lprint('Using {} threads'.format(args.parallel))
         pool = Pool(args.parallel)
