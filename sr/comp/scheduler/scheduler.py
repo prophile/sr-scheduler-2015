@@ -8,12 +8,11 @@ from math import ceil
 from fractions import gcd
 import os.path
 
-import argparse
 import yaml
 from datetime import timedelta
 
 from multiprocessing import Pool
-from .metadata import DESCRIPTION, VERSION
+from .args import argument_parser
 
 class PatienceCounter(object):
     def __init__(self, threshold):
@@ -252,35 +251,7 @@ def max_possible_match_periods(sched_db):
     return int(total_league_time.total_seconds() // match_period_length)
 
 def main(*args):
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
-    parser.add_argument('compstate',
-                        type=str,
-                        help='competition state git repository')
-    parser.add_argument('-s', '--spacing',
-                        type=int,
-                        default=2,
-                        help='number of matches between any two appearances by a team')
-    parser.add_argument('-r', '--max-repeated-matchups',
-                        type=int,
-                        default=2,
-                        help='maximum times any team can face any given other team')
-    parser.add_argument('-a', '--appearances-per-round',
-                        type=int,
-                        default=1,
-                        help='number of times each team appears in each round')
-    parser.add_argument('--lcg',
-                        action='store_true',
-                        dest='lcg',
-                        help='enable LCG permutation')
-    parser.add_argument('--parallel',
-                        type=int,
-                        default=1,
-                        help='number of parallel threads')
-    parser.add_argument('-v', '--version',
-                        action='version',
-                        version=VERSION,
-                        help='display version and exit')
-    args = parser.parse_args(args)
+    args = argument_parser().parse_args(args)
 
     with open(os.path.join(args.compstate, 'arenas.yaml')) as f:
         arenas_db = yaml.load(f)
