@@ -18,7 +18,7 @@ setup(name='sr.comp.scheduler',
       author_email='srobo-devel@googlegroups.com',
       install_requires=['PyYAML >=3.11, <4'],
       setup_requires=[
-          'Sphinx >=1.3b, <2',
+          'Sphinx >=1.2, <2',
           'sphinx-argparse >=0.1.13, <0.2'
       ],
       zip_safe=True,
