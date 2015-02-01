@@ -1,3 +1,5 @@
+sys.path.insert(0, os.path.abspath('..'))
+
 # Sphinx configuration
 extensions = [
     'sphinx.ext.autodoc',
