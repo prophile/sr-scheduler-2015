@@ -17,6 +17,10 @@ setup(name='sr.comp.scheduler',
       author='Student Robotics Competition Software SIG',
       author_email='srobo-devel@googlegroups.com',
       install_requires=['PyYAML >=3.11, <4'],
+      setup_requires=[
+          'Sphinx >=1.3b, <2',
+          'sphinx-argparse >=0.1.13, <0.2'
+      ],
       zip_safe=True,
       classifiers=[
           'Development Status :: 3 - Alpha',
