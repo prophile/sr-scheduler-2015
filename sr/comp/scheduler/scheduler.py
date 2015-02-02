@@ -147,7 +147,7 @@ class Scheduler(object):
 
     def _compute_lcg_params(self):
         m = len(self._teams)
-        for a in range(m - 1, 0, -1):
+        for a in range(m - 1, 1, -1):
             am1 = a - 1
             if am1 % 4 != 0:
                 continue
