@@ -9,6 +9,7 @@ User Guide
 
    installation
    usage
+   algorithm
 
 Indices and tables
 ==================
