@@ -26,6 +26,10 @@ def argument_parser():
                         type=int,
                         default=1,
                         help='number of parallel threads')
+    parser.add_argument('-f', '--reschedule-from',
+                        type=int,
+                        default=0,
+                        help='first match to reschedule from')
     parser.add_argument('-v', '--version',
                         action='version',
                         version=VERSION,

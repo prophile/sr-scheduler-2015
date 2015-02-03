@@ -48,15 +48,23 @@ class Scheduler(object):
                  appearances_per_round=1,
                  separation=2,
                  max_matchups=2,
-                 enable_lcg=True):
+                 enable_lcg=True,
+                 base_matches=()):
         self.tag = ''
         self.num_corners = num_corners
         self.random = random
         self.arenas = tuple(arenas)
         self.max_match_periods = max_match_periods
         self.appearances_per_round = appearances_per_round
+        self._base_matches = list(base_matches)
+        for match in base_matches:
+            for n, entry in enumerate(match):
+                if entry is None:
+                    match[n] = '~'
         self._calculate_teams(teams)
         self._calculate_rounds()
+        if len(self._base_matches) % self.round_length > 0:
+            self.lprint('Warning: matches for partial reschedule are not a multiple of the round-length')
         self.separation = separation
         self.max_matchups = max_matchups
         if enable_lcg:
@@ -191,10 +199,11 @@ class Scheduler(object):
     def run(self):
         matchup_impatience = PatienceCounter(200000)
         max_matchups = self.max_matchups
-        matches = []
+        matches = list(self._base_matches)
         teams = list(self._teams)
         self.random.shuffle(teams)
-        while len(matches) < self.total_matches:
+        while (len(matches) < self.total_matches and
+               len(matches) + self.round_length <= self.max_match_periods):
             this_round = len(matches) // self.round_length
             self.lprint('Scheduling round {round} ({prev}/{tot} complete)'.format(
                             round=this_round,
@@ -219,8 +228,9 @@ class Scheduler(object):
                     matches = matches_prime
                     break
             else:
-                self.lprint('  backtracking')
-                matches = matches[:-self.round_length]
+                if len(matches) > len(self._base_matches):
+                    self.lprint('  backtracking')
+                    matches = matches[:-self.round_length]
         return self._clean(matches)
 
     def _match_partition(self, teams):
@@ -230,17 +240,18 @@ class Scheduler(object):
         return entries
 
     def _clean(self, matches):
-        def get_match(match):
+        def get_match(match_id, match):
             data = {}
             for arena_id, arena in enumerate(self.arenas):
                 entrants = match[arena_id*self.num_corners:(arena_id+1)*self.num_corners]
                 # Shuffle entrants to get statistically sensible zone distribution
-                self.random.shuffle(entrants)
+                if match_id >= len(self._base_matches): # don't shuffle provided matches!
+                    self.random.shuffle(entrants)
                 entrants = [None if self._is_pseudo(entrant) else entrant
                              for entrant in entrants]
                 data[arena] = entrants
             return data
-        return {match_id: get_match(match) for match_id, match in enumerate(matches)}
+        return {match_id: get_match(match_id, match) for match_id, match in enumerate(matches)}
 
 def max_possible_match_periods(sched_db):
     # Compute from the contents of a schedule.yaml the number of league periods
@@ -265,6 +276,13 @@ def main(*args):
         sched_db = yaml.load(f)
         max_periods = max_possible_match_periods(sched_db)
 
+    base_matches = []
+    for n in range(args.reschedule_from):
+        match_slot = []
+        for arena in arenas:
+            match_slot.extend(sched_db['matches'][n][arena])
+        base_matches.append(match_slot)
+
     scheduler = Scheduler(teams=teams,
                           max_match_periods=max_periods,
                           arenas=arenas,
@@ -272,6 +290,7 @@ def main(*args):
                           separation=args.spacing,
                           max_matchups=args.max_repeated_matchups,
                           appearances_per_round=args.appearances_per_round,
+                          base_matches=base_matches,
                           enable_lcg=args.lcg)
     if args.parallel > 1:
         scheduler.lprint('Using {} threads'.format(args.parallel))

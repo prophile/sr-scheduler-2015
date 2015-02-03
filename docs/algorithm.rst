@@ -79,6 +79,18 @@ Once all match periods have been scheduled, the appearances in each match
 are also randomly permuted. This ensures a statistically even distribution
 of zones, in accordance with the *zone distribution* constraint.
 
+Partial Rescheduling
+--------------------
+
+In certain circumstances (notably, if significant numbers of teams have
+dropped out over the course of the competition) it may be beneficial to run
+a partial reschedule—to provide a schedule using a number of matches from
+the previous schedule. This is supported by seeding matches in the greedy
+algorithm and continuing scheduling from there.
+
+.. warning:: If the schedule up to the point where the scheduler is started
+   is invalid, the scheduler will never terminate.
+
 .. [#src] In this case calculated from the match period length and the day
    schedule in a ``schedule.yaml`` from a compstate repository.
 
